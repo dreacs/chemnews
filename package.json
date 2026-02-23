@@ -1,0 +1,38 @@
+{
+  "name": "chemmarket-dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "dev:electron": "electron .",
+    "build:electron": "next build && electron-builder"
+  },
+  "build": {
+    "appId": "com.chemmarket.dashboard",
+    "productName": "ChemMarket Dashboard",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "out/**/*",
+      "main.js",
+      "package.json",
+      "node_modules/**/*"
+    ]
+  },
+  "dependencies": {
+    "next": "16.1.6",
+    "react": "19.2.3",
+    "react-dom": "19.2.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "eslint": "^9",
+    "eslint-config-next": "16.1.6",
+    "tailwindcss": "^4"
+  }
+}
