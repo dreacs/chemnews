@@ -1,103 +1,83 @@
-// app/page.js
 'use client';
-import { useEffect, useState } from 'react';
-import Timeline from '../components/Timeline';
-import CalendarTimeline from '../components/CalendarTimeline';
 
-export default function Dashboard() {
-  const [news, setNews] = useState([]);
-  const [loading, setLoading] = useState(true);
+import { useState, useEffect } from 'react';
+import Header from '../components/Header';
+import StatsBar from '../components/StatsBar';
+import TrendChart from '../components/TrendChart';
+import IntelligenceFeed from '../components/IntelligenceFeed';
 
-  // Auto-refresh mechanism
-  const [lastUpdate, setLastUpdate] = useState(new Date());
+export default function Home() {
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [stats, setStats] = useState({ totalToday: 0, bullish: 0, bearish: 0, neutral: 0 });
+  const [chartData, setChartData] = useState([]);
+  const [articles, setArticles] = useState([]);
 
-  const [filter, setFilter] = useState('All');
-  const [selectedDate, setSelectedDate] = useState(null);
-
-  const chemicals = ['All', 'Ammonia', 'Acetone', 'Methanol', 'Caustic Soda', 'Brent Crude'];
-
-  const fetchNews = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch('/api/fetch-news');
-      const json = await res.json();
-      if (json.success) {
-        setNews(json.data);
-      }
-    } catch (err) {
-      console.error('Failed to fetch news', err);
-    } finally {
-      setLoading(false);
-      setLastUpdate(new Date());
-    }
-  };
-
+  // Mock data for UI development before DB is wired up
   useEffect(() => {
-    fetchNews();
-
-    // Poll every 30 minutes (30 * 60 * 1000 ms)
-    const intervalId = setInterval(fetchNews, 1800000);
-    return () => clearInterval(intervalId);
+    setStats({ totalToday: 12, bullish: 5, bearish: 3, neutral: 4 });
+    setChartData([
+      { name: 'Feb 3', Bullish: 4, Bearish: 2, Neutral: 5 },
+      { name: 'Feb 4', Bullish: 3, Bearish: 4, Neutral: 3 },
+      { name: 'Feb 5', Bullish: 6, Bearish: 1, Neutral: 4 },
+      { name: 'Feb 6', Bullish: 2, Bearish: 5, Neutral: 2 },
+      { name: 'Feb 7', Bullish: 5, Bearish: 3, Neutral: 4 },
+    ]);
+    setArticles([
+      {
+        id: 1,
+        source: 'PlasticsToday',
+        title: 'Acetone Prices Hit New Highs Amidst Supply Chain Constraints',
+        summary: 'Major producers have announced immediate price hikes for acetone following unexpected turnaround operations at two key facilities in Europe. Short-term supply is expected to remain tight.',
+        commodity_tag: 'Acetone',
+        impact_badge: 'Bullish',
+        confidence_score: 92,
+        publish_date: new Date().toISOString()
+      },
+      {
+        id: 2,
+        source: 'PlasticsToday',
+        title: 'European Ammonia Demand Softens in Q1',
+        summary: 'Despite stable natural gas prices, industrial demand for ammonia in the Eurozone has seen a slight decline compared to the previous quarter, leading to a build-up in localized inventory.',
+        commodity_tag: 'Ammonia',
+        impact_badge: 'Bearish',
+        confidence_score: 85,
+        publish_date: new Date(Date.now() - 3600000).toISOString()
+      },
+      {
+        id: 3,
+        source: 'PlasticsToday',
+        title: 'Regulatory Review on Chemical Imports Stalls',
+        summary: 'The proposed tariffs on specific chemical imports have been delayed until the next legislative session, maintaining the status quo for current trades.',
+        commodity_tag: 'General',
+        impact_badge: 'Neutral',
+        confidence_score: 78,
+        publish_date: new Date(Date.now() - 7200000).toISOString()
+      }
+    ]);
   }, []);
 
-  const filteredNews = filter === 'All' ? news : news.filter(n => n.chemical === filter);
-
-  // Double filter context (Material + Date)
-  const finalFilteredNews = selectedDate
-    ? filteredNews.filter(n => new Date(n.timeReleased).toLocaleDateString() === selectedDate)
-    : filteredNews;
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    // TODO: Call /api/ingest
+    setTimeout(() => {
+      setIsRefreshing(false);
+    }, 2000);
+  };
 
   return (
-    <main className="dashboard-layout">
-      <header className="dashboard-header animate-fade-in">
-        <h1>ChemMarket Intel</h1>
-        <p>Real-time AI sentiment analysis for European petrochemical markets</p>
-        <div style={{ marginTop: '16px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-          Last Updated: {lastUpdate.toLocaleTimeString()}
-          <button
-            onClick={fetchNews}
-            style={{
-              marginLeft: '12px', background: 'var(--glass-border)', color: 'white',
-              border: 'none', padding: '4px 12px', borderRadius: '4px', cursor: 'pointer'
-            }}
-          >
-            Refresh
-          </button>
-        </div>
+    <main>
+      <Header onRefresh={handleRefresh} isRefreshing={isRefreshing} />
 
-        {/* Filter Bar */}
-        <div style={{ marginTop: '32px', display: 'flex', justifyContent: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          {chemicals.map(chem => (
-            <button
-              key={chem}
-              onClick={() => setFilter(chem)}
-              style={{
-                background: filter === chem ? 'var(--accent-blue)' : 'var(--glass-border)',
-                color: 'white', border: 'none', padding: '8px 16px', borderRadius: '20px',
-                cursor: 'pointer', fontWeight: 500, transition: 'background 0.2s'
-              }}
-            >
-              {chem}
-            </button>
-          ))}
-        </div>
-      </header>
+      <StatsBar stats={stats} />
 
-      {!loading && news.length > 0 && (
-        <CalendarTimeline
-          data={filteredNews}
-          selectedDate={selectedDate}
-          onSelectDate={setSelectedDate}
-        />
-      )}
-
-      {loading && news.length === 0 ? (
-        <div className="glass-panel animate-fade-in" style={{ textAlign: 'center' }}>
-          <p>Loading market intelligence & 60-day historical data...</p>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2">
+          <TrendChart data={chartData} />
         </div>
-      ) : (
-        <Timeline data={finalFilteredNews} />
-      )}
+        <div className="lg:col-span-1">
+          <IntelligenceFeed articles={articles} />
+        </div>
+      </div>
     </main>
   );
 }
